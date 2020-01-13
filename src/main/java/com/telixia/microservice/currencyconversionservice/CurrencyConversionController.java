@@ -10,16 +10,18 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
+import org.slf4j.Logger;  
+import org.slf4j.LoggerFactory;  
 
 @RestController
 public class CurrencyConversionController {
 
     @Autowired
     private CurrencyExchangeServiceProxy proxy;
+    
+    private Logger logger=LoggerFactory.getLogger(this.getClass());  
 
-    @GetMapping("/currency-converter/from/{from}/to/{to}/quantity/{quantity}") // where {from} and {to} represents the
-                                                                               // column
-    // returns a bean back
+    @GetMapping("/currency-converter/from/{from}/to/{to}/quantity/{quantity}")                                                          // column
     public CurrencyConversionBean convertCurrency(@PathVariable String from, @PathVariable String to,
             @PathVariable BigDecimal quantity) {
         // setting variables to currency exchange service
@@ -31,6 +33,8 @@ public class CurrencyConversionController {
                 "http://localhost:8000/currency-exchange/from/{from}/to/{to}", CurrencyConversionBean.class,
                 uriVariables);
         CurrencyConversionBean response = responseEntity.getBody();
+        logger.info("{}", response);
+
         return new CurrencyConversionBean(response.getId(), from, to, response.getConversionMultiple(), quantity,
                 quantity.multiply(response.getConversionMultiple()), response.getPort());
     }
@@ -40,7 +44,7 @@ public class CurrencyConversionController {
     public CurrencyConversionBean convertCurrencyFeign(@PathVariable String from, @PathVariable String to,
             @PathVariable BigDecimal quantity) {
         CurrencyConversionBean response = proxy.retrieveExchangeValue(from, to);
-        // creating a new response bean
+        logger.info("{}", response);
         // getting the response back and taking it into Bean
         return new CurrencyConversionBean(response.getId(), from, to, response.getConversionMultiple(), quantity,
                 quantity.multiply(response.getConversionMultiple()), response.getPort());
